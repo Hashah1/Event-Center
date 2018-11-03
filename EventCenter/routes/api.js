@@ -56,9 +56,9 @@ router.put('/:id', function(req, res, next) {
   });
 
   // To handle query GETS an ID
+  // Should return items matching the id in the parameter passed
 router.get('/form/:id', (req,res) => {
 	const id = req.params.id
-
 	Form.findById(id)
 	.then(forms => {
 		// return json response

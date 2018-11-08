@@ -7,9 +7,13 @@ const cors = require('cors');
 const app = express();
 
 app.use(cors());
-// Bodyparser Middleware
+// Bodyparser Middleware for json requests
 app.use(bodyParser.json());
 
+// Parser for Postman
+app.use(bodyParser.urlencoded({
+    extended: true
+  }));
 // DB config
 const db = require('./config/keys').mongoURI;
 

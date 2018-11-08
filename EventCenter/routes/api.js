@@ -9,20 +9,20 @@ const Form = require('../models/form')
 // This route POSTs - The 'C' in CRUD
 router.post('/form', (req,res) => {
 	Form.create(req.body)
-	.then(forms => {
+	.then(newForm => {
 		// return json response
 		res.json({
-			confirmation: 'success',
-			data: forms
+			confirmation: 'Successful',
+			data: newForm
 		})
 	})
 	.catch(err => {
 		res.json({
-			confirmation: 'fail',
-			data: err.message
+			confirmation: 'Unsuccessful',
+			message: err.message
 		})
 	})
-})
+});
 
 // This route GETs - The 'R' in CRUD
 router.get('/form', (req,res) => {
@@ -34,50 +34,61 @@ router.get('/form', (req,res) => {
 	.then(forms => {
 		// return json response
 		res.json({
-			confirmation: 'success',
+			confirmation: 'Successful',
 			data: forms
 		})
 	})
 	.catch(err => {
 		res.json({
-			confirmation: 'fail',
-			data: err.message
+			confirmation: 'Unsuccessful',
+			message: err.message
 		})
 	})
-})
+});
 
 // This route UPDATES - The 'U' in CRUD
-/* UPDATE BOOK */
-router.put('/:id', function(req, res, next) {
-	Book.findByIdAndUpdate(req.params.id, req.body, function (err, post) {
-	  if (err) return next(err);
-	  res.json(post);
-	});
+router.post('/form/update/:id', (req, res) => {
+	const id = req.params.id;
+	Form.findByIdAndUpdate(id, req.body, {new: true})
+	.then(updatedForm => {
+		// return successful response
+		res.json({
+			confirmation: 'Successful',
+			form: updatedForm
+		});
+	})
+	.catch (err => {
+		// return unsuccessful response
+		res.json({
+			confirmation: 'Unsuccessful',
+			message: err.message
+		});
+	});	
   });
+  
+
 
   // To handle query GETS an ID
   // Should return items matching the id in the parameter passed
-router.get('/form/:id', (req,res) => {
-	const id = req.params.id
+  router.get('/form/:id', (req,res) => {
+	const id = req.params.id;
+	console.log("received id: " + id);
 	Form.findById(id)
 	.then(forms => {
-		// return json response
+		// return json successful response
 		res.json({
-			confirmation: 'success',
+			confirmation: 'Successful',
 			data: forms
 		})
 	})
 	.catch (err => {
-		// return json response
+		// return json unsuccessful response
 		res.json({
-			confirmation: 'success',
-			data: err.message
+			confirmation: 'Unsuccessful',
+			message: err.message
 		})
 	})
-})
-
-
-
+});
 
 
 module.exports = router;

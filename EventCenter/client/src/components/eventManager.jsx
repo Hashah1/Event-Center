@@ -25,7 +25,15 @@ export default class EventManager extends React.Component {
 
       };
     }
-    
+
+    toggle = (tab) => {
+      if (this.state.activeTab !== tab) {
+        this.setState({
+          activeTab: tab
+        });
+      }
+    }
+
     onChange_eventName = (e) => {
       this.setState({
         eventName: e.target.value,
@@ -68,8 +76,10 @@ export default class EventManager extends React.Component {
     }
 
     // when user clicks submit in post tab
-    onSubmit = (e) => {
-      e.preventDefault();
+    onClickPost = (e) => {
+      e.preventDefault(); // Prevent reloading page 
+
+      // Store the state of current data into form
       const submitData = {
         isPublished: false,
         eventName: this.state.eventName,
@@ -80,9 +90,61 @@ export default class EventManager extends React.Component {
         eventHost: this.state.eventHost,
         eventContact: this.state.eventContact,
       }
-      axios.post('http://localhost:5000/api/form', submitData)
-      .then(res => console.log(res.data));
 
+      // Post to DB with the current state
+      axios.post('http://localhost:5000/api/form', submitData)
+      .then((res) => {
+        console.log(res.data); // Log data onto console
+
+        const form = res.data.data; // Get data from the response
+        
+        // Create a copy of published and drafted arrays and store
+        // Push it to the top of the page
+        const newPublished = this.state.publishedEvents.slice();  
+        newPublished.unshift(form); 
+
+        const newDrafts = this.state.draftedEvents.slice();
+        newDrafts.unshift(form);
+
+        this.setState ({   
+          status: 'draft',     
+          eventName: '',
+          eventDescription: '',
+          eventDate: '',
+          eventTime: '',
+          eventLocation: '',
+          eventHost: '',
+          eventContact: '',
+  
+          publishedEvents: newPublished,
+          draftedEvents: newDrafts
+        });
+      });
+    } // End onClickPost
+
+    // when user clicks publish in Drafts tab
+    onClickPublish = (id) => {
+      console.log("clicked publish with id: " + id);
+      axios.post('http://localhost:5000/api/form/update/' + id, {status: "published"})
+      .then(result => {
+        console.log("successfully published:");
+        console.dir(result.data);
+
+        const event = result.data.form;
+        const filteredDrafts = this.state.draftedEvents.filter(form => form._id != id);
+        const newState = {...this.state, draftedEvents: filteredDrafts};
+        newState.publishedEvents.unshift(event);
+        this.setState(newState);
+      })
+      .catch (err => {
+        console.log("error publishing with:" + err);
+      });
+
+
+    } // End onClickPublish
+
+    // Clear form when user hits "clear" in form
+    onClickClear = () => {
       this.setState ({   
         status: 'draft',     
         eventName: '',
@@ -98,12 +160,6 @@ export default class EventManager extends React.Component {
       })
     }
 
-    // when user clicks publish in Drafts tab
-    onClickPublish = (e) => {
-      console.log("clicked publish");
-      
-    }
-
     componentDidMount = () => {
       console.log("componentDidMount");
       this.loadPublishedEventsFromServer();
@@ -114,6 +170,8 @@ export default class EventManager extends React.Component {
       axios.get('http://localhost:5000/api/form?status=published')
       .then(res => {
         console.log(res.data);
+
+        // Load new state
         let newState = {...this.state, publishedEvents: res.data.data };
         this.setState(newState);
         console.log(this.state);
@@ -124,18 +182,12 @@ export default class EventManager extends React.Component {
       axios.get('http://localhost:5000/api/form?status=draft')
       .then(res => {
         console.log(res.data);
+
+        // Load new state
         let newState = {...this.state, draftedEvents: res.data.data };
         this.setState(newState);
         console.log(this.state);
       });
-    }
-
-    toggle = (tab) => {
-      if (this.state.activeTab !== tab) {
-        this.setState({
-          activeTab: tab
-        });
-      }
     }
 
     render() {
@@ -199,12 +251,12 @@ export default class EventManager extends React.Component {
           <TabContent activeTab={this.state.activeTab}>
 
             {/*Will POST new events through a form*/}
-            <TabPane tabId="1">
+            <TabPane tabId="1" style = {{paddingLeft: 100}}>
               <Row>
                 <Col sm="10">
-                  <h4 align = "center">Post New announcements</h4> <br></br>
+                  <h4 align = "center" style = {{paddingTop: 5}}>Post New announcements</h4> <br></br>
 
-                  <Form onSubmit={this.onSubmit} >
+                  <Form>
                   <FormGroup row>
                     <Label for="EventName" sm={2}>Event Name</Label>
                     <Col sm={10}>
@@ -251,13 +303,16 @@ export default class EventManager extends React.Component {
                     <Label for="EventContactInfo" sm={2}>Host Email</Label>
                     <Col sm={10}>
                       <Input type="email" value={this.state.eventContact} onChange={this.onChange_eventContact} name="EventContactInfo" id="EventContactInfo" placeholder="JohnDoe@sjsu.edu" />
+                      
+                      <Col sm = {100} style = {{paddingTop:15}}>
+                      <Button color = "success" onClick={this.onClickClear}block> Post </Button>
+                      <Button color = "danger" onClick={this.onClickPost}block> Clear </Button>
+                      </Col>
                     </Col>
                   </FormGroup>
+                 
 
-                  <FormGroup>
-                  <Button color = "danger" className="float-right"> Delete </Button> 
-                  <Button color = "success" className="float-right"> Save </Button> 
-                  </FormGroup>
+                  
                   </Form>     
                   </Col>
               </Row>
@@ -269,14 +324,14 @@ export default class EventManager extends React.Component {
                         edit*/}
             <TabPane tabId="2" >
               <Row>
-                <Col sm="12" style = {{paddingTop: '10px'}}> 
+                <Col sm="12" style = {{paddingTop: 10}}> 
 
-                    {this.state.draftedEvents.map((event) => (
+                    {this.state.draftedEvents.map((event) => (  
                       <Card body>
                         <CardTitle>{event.eventName}</CardTitle>
                         <CardText>{event.eventDescription}</CardText>
                         <ButtonGroup>
-                            <Button color="primary" onClick = {()=>this.onClickPublish()}>Publish</Button>
+                            <Button color="primary" onClick = {()=>this.onClickPublish(event._id)}>Publish</Button>
                             <Button color="secondary">Edit</Button>
                             <Button color="danger">Delete</Button>
                         </ButtonGroup>

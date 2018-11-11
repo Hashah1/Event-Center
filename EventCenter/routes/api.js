@@ -6,7 +6,7 @@ const router = express.Router();
 // Include our Form schema
 const Form = require('../models/form')
 
-// This route POSTs - The 'C' in CRUD
+// This route POSTs
 router.post('/form', (req,res) => {
 	Form.create(req.body)
 	.then(newForm => {
@@ -24,7 +24,7 @@ router.post('/form', (req,res) => {
 	})
 });
 
-// This route GETs - The 'R' in CRUD
+// This route GETs
 router.get('/form', (req,res) => {
 	// Get query from url
 	const query = req.query
@@ -46,7 +46,7 @@ router.get('/form', (req,res) => {
 	})
 });
 
-// This route UPDATES - The 'U' in CRUD
+// This route UPDATES
 router.post('/form/update/:id', (req, res) => {
 	const id = req.params.id;
 	Form.findByIdAndUpdate(id, req.body, {new: true})
@@ -66,7 +66,25 @@ router.post('/form/update/:id', (req, res) => {
 	});	
   });
   
-
+// This route DELETES
+router.get('/form/remove/:id', (req,res) => {
+	console.log("in delete route with id:" + req.params.id)
+	Form.findByIdAndRemove(req.params.id)
+	.then(updatedForm => {
+		// return successful response
+		res.json({
+			confirmation: 'Successful',
+			form:  updatedForm
+		});
+	})
+	.catch (err => {
+		// return unsuccessful response
+		res.json({
+			confirmation: 'Unsuccessful',
+			message: err.message
+		});
+	});	
+  });
 
   // To handle query GETS an ID
   // Should return items matching the id in the parameter passed

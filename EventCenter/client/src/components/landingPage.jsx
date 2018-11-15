@@ -1,48 +1,67 @@
 import React, { Component } from 'react';
 import "./landingPage.css"
-
+import FacebookLogin from 'react-facebook-login';
+import { BrowserRouter, Route } from 'react-router-dom'
 import { AvForm, AvGroup, AvInput, AvFeedback,  } from 'availity-reactstrap-validation';
 import { Button , Label} from 'reactstrap';
+import eventManager from './eventManager';
 
 export default class LandingPage extends Component {
+    state = {
+        isLoggedIn: false,
+        userID: '',
+        name: '',
+        email: '',
+        picture: ''
+    }
+    responseFacebook = (response) => {
+        console.log ("in responseFacebook:" + response);
+        this.setState ({
+            isLoggedIn: true,
+            userID: response.userID,
+            name: response.name,
+            email: response.email,
+            picture: response.picture.data.url
+        });
+    };
+    componentClicked = () => {
+        console.log ("component clicked");
+    }
+
     render() { 
+        let fbContent;
+        if (this.state.isLoggedIn) {
+            // When we are logged in
+            fbContent = (
+                <div style = {{
+                    width: 'auto',
+                    margin: 'auto',
+                    background: '#053779',
+                    padding: '20px'
+                }}>
+                <img src={this.state.picture} alt={this.state.name} />
+                <h2>Welcome {this.state.name}</h2>
+                Email: {this.state.email}
+
+                </div>
+
+            );
+        } else {
+            fbContent = (
+            <FacebookLogin
+                appId = "549277225516748"
+                autoLoad = {true}
+                fields = "name,email,picture"
+                onClick = {this.componentClicked}
+                callback = {this.responseFacebook}
+                />
+            );
+        }
+
         return (
             <div className = "login">
-            <AvForm>
-                <AvGroup> {/*Group to submit email address*/}
-                    <Label for="email">E-mail</Label>
-                    <AvInput name="email" id="email"  type = "email"required />
-                    
-                    <AvFeedback>This field is invalid</AvFeedback>
-                </AvGroup>
-
-                <AvGroup>{/*Group to submit password*/}
-                    <Label for="password">Password</Label>
-                    <AvInput name="password" id="password" type = "password"required />
-                    
-                    <AvFeedback>This field is invalid</AvFeedback>
-                </AvGroup>
-            </AvForm>
-
-            <Button color = "primary" onClick = {() => this.handleClick()}>
-                login
-            </Button>
-            <br></br>
-
-            <p>or continue as <i>guest</i></p>
+            {fbContent}
             </div>
         );
     }
-
-
-      // add arrows to avoid the binding in constructor. arrow functions inherit binding
-      handleClick = ({email,password}) => {
-        // log that the button has been clicked
-        console.log("login button clicked", this.state.email, this.state.password);
-        
-        if (this.state.email === "" | this.state.password === ""){
-            return <h1>"ERROr"</h1>
-        }
-    }
 }
- 

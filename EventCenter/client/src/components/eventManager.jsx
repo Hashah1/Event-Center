@@ -1,6 +1,5 @@
 //TODO: 
-// 1. form doesnt automatically clear when we hit submit
-// 2. When we hit clear
+// 2. When we type something in published edit, it copies over same state
 // 3. When adding file to drafts , its copied to published too
 import React from 'react';
 import { Col, Button, TabContent, TabPane, Nav, NavItem, NavLink, Card, CardTitle, CardText, Row, Modal, ModalHeader , ModalFooter, ModalBody} from 'reactstrap';
@@ -145,19 +144,35 @@ export default class EventManager extends React.Component {
         
         // Create a copy of published and drafted arrays and store
         // Push it to the top of the page
-        const newDrafts = this.state.draftedEvents.slice();
-        const newPublished = this.state.publishedEvents.slice();
 
-        newDrafts[this.state.selectedDraftIndex] = form;
-        newPublished[this.state.selectedPublishedIndex] = form;
-
-        this.setState ({ 
+        if (updatedEvent.status === "published")
+        {
+          var newPublished = this.state.publishedEvents.slice();
+          newPublished[this.state.selectedPublishedIndex] = form;
+          this.setState ({ 
+            activeTab: this.state.activeTab,
+            modal: !this.state.modal,
+            draftedEvents: this.state.draftedEvents,
+            publishedEvents: newPublished,
+            selectedPublishedIndex: -1,
+            selectedDraftIndex: this.state.index
+          });
+          
+        }
+        else if (updatedEvent.status === "draft")
+        {
+          var newDrafts = this.state.draftedEvents.slice();
+          newDrafts[this.state.selectedDraftIndex] = form;
   
-          activeTab: this.state.activeTab,
-          modal: !this.state.modal,
-          publishedEvents: newPublished,
-          draftedEvents: newDrafts
-        });
+          this.setState ({ 
+            activeTab: this.state.activeTab,
+            modal: !this.state.modal,
+            draftedEvents: newDrafts,
+            publishedEvents: this.state.publishedEvents,
+            selectedPublishedIndex: this.state.index,
+            selectedDraftIndex: -1
+          });
+        }
       });
     }
     
@@ -169,14 +184,23 @@ export default class EventManager extends React.Component {
     ////////////////////////////////////////////////////////////
     onClickEdit = (event, index) => {
       console.log ("clicked edit button on event: " );
-      console.dir(event);
-
-      const new_state =  {...this.state,
-                         modal: !this.state.modal,
-                         selectedDraftIndex: index,
-                         selectedPublishedIndex: index,
-                         };
+      console.dir(event); 
+      var new_state;
+      if (event.status === "published"){
+          new_state =  {...this.state,
+                        modal: !this.state.modal,
+                        selectedPublishedIndex: index,
+                        };
+          this.setState(new_state);
+      }
+      else if (event.status === "draft")
+      {
+        new_state =  {...this.state,
+          modal: !this.state.modal,
+          selectedDraftIndex: index,
+          };
         this.setState(new_state);
+      }
     }
 
     ////////////////////////////////////////////////////////////
@@ -360,7 +384,7 @@ export default class EventManager extends React.Component {
                             <Button color="primary" onClick = {()=>this.moveToPublished(event._id)}>Move to Published events</Button> {' '}
                             <Button color="secondary" onClick = {()=>this.onClickEdit(event, index)}>Edit</Button> {' '}
                                   <div className="modal">
-                                  <Modal isOpen={this.state.modal && index === this.state.selectedDraftIndex } toggle={this.edit_modal_toggle}>
+                                  <Modal isOpen={ this.state.modal && index === this.state.selectedDraftIndex } toggle={this.edit_modal_toggle}>
                                     <ModalHeader toggle={this.edit_modal_toggle}>Edit your event</ModalHeader>
                                     <ModalBody>
                                        <div>
@@ -401,7 +425,7 @@ export default class EventManager extends React.Component {
                     <Button color="primary" onClick = {()=>this.moveToDrafts(event._id)}>Move to Drafts</Button> {' '}
                     <Button color="secondary" onClick = {()=>this.onClickEdit(event, index)}>Edit</Button> {' '}
                       <div className="modal">
-                      <Modal isOpen={this.state.modal && index === this.state.selectedPublishedIndex } toggle={this.edit_modal_toggle}>
+                      <Modal isOpen={ this.state.modal && index === this.state.selectedPublishedIndex } toggle={this.edit_modal_toggle}>
                         <ModalHeader toggle={this.edit_modal_toggle}>Edit your event</ModalHeader>
                         <ModalBody>
                            <div>

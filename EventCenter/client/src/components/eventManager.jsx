@@ -1,7 +1,7 @@
 //TODO: 
 // 1. form doesnt automatically clear when we hit submit
-// 2. When we hit clear, the page reloads
-
+// 2. When we hit clear
+// 3. When adding file to drafts , its copied to published too
 import React from 'react';
 import { Col, Button, TabContent, TabPane, Nav, NavItem, NavLink, Card, CardTitle, CardText, Row, Modal, ModalHeader , ModalFooter, ModalBody} from 'reactstrap';
 import classnames from 'classnames';
@@ -19,51 +19,68 @@ export default class EventManager extends React.Component {
       this.state = {
         activeTab: '1',
         modal: false,
-        
-        status: 'draft',
-        eventName: '',
-        eventDescription: '',
-        eventDate: '',
-        eventTime: '',
-        eventLocation: '',
-        eventHost: '',
-        eventContact: '',
 
         publishedEvents: [],
         draftedEvents: []
       };
     };
 
+    ///////////////////////////////////////////////
+    // componentDidMount -> 
+    // Loads all events upon component load
+    ///////////////////////////////////////////////
     componentDidMount = () => {
       console.log("componentDidMount");
+      console.dir(this.state);
       this.loadPublishedEventsFromServer();
       this.loadDraftedEventsFromServer();
     }
+
+    ///////////////////////////////////////////////
+    // componentDidUpdate -> 
+    // Displays updated component
+    ///////////////////////////////////////////////
+    componentDidUpdate = () => {
+      console.log("componentDidUpdate");
+      console.dir(this.state);
+    }
   
+    ///////////////////////////////////////////////////////////////
+    // loadPublishedEventsFromServer -> 
+    // Loads all published events from  DB into the "published" tab
+    ///////////////////////////////////////////////////////////////
     loadPublishedEventsFromServer = () => {
       axios.get('http://localhost:5000/api/form?status=published')
       .then(res => {
-        console.log(res.data);
+        //console.log(res.data);
 
         // Load new state
         let newState = {...this.state, publishedEvents: res.data.data };
         this.setState(newState);
-        console.log(this.state);
+        //console.log(this.state);
       });
     }
 
+    ///////////////////////////////////////////////////
+    // loadDraftedEventsFromServer-> 
+    // Loads all drafts from DB into the "draft" tab
+    ///////////////////////////////////////////////////
     loadDraftedEventsFromServer = () => {
       axios.get('http://localhost:5000/api/form?status=draft')
       .then(res => {
-        console.log(res.data);
+        //console.log(res.data);
 
         // Load new state
         let newState = {...this.state, draftedEvents: res.data.data };
         this.setState(newState);
-        console.log(this.state);
+        //console.log(this.state);
       });
     }
     
+    ///////////////////////////////////////////////////
+    // toggle() -> 
+    // selects which tab is being used
+    ///////////////////////////////////////////////////
     toggle = (tab) => {
       if (this.state.activeTab !== tab) {
         this.setState({
@@ -72,29 +89,22 @@ export default class EventManager extends React.Component {
       }
     }
 
-    edit_modal_toggle = () => {
-      this.setState({
-        modal: !this.state.modal
-      });
-    }
-
     ///////////////////////////////////////////////////
-    // This function submits the form as a draft event
+    // onClickPost -> 
+    // submits the form as a draft event
     // when the user clicks "submit"
     ///////////////////////////////////////////////////
-    onClickPost = (e) => {
-      e.preventDefault(); // Prevent reloading page 
-      console.log(e);
+    onClickPost = (postData) => {      
       // Store the state of current data into form
       const submitData = {
         status: 'draft',
-        eventName: this.state.eventName,
-        eventDescription: this.state.eventDescription,
-        eventDate: this.state.eventDate,
-        eventTime: this.state.eventTime,
-        eventLocation: this.state.eventLocation,
-        eventHost: this.state.eventHost,
-        eventContact: this.state.eventContact,
+        eventName: postData.eventName,
+        eventDescription: postData.eventDescription,
+        eventDate: postData.eventDate,
+        eventTime: postData.eventTime,
+        eventLocation: postData.eventLocation,
+        eventHost: postData.eventHost,
+        eventContact: postData.eventContact
       }
 
       // Post to DB with the current state
@@ -106,74 +116,86 @@ export default class EventManager extends React.Component {
         
         // Create a copy of published and drafted arrays and store
         // Push it to the top of the page
-        const newPublished = this.state.publishedEvents.slice();  
-        newPublished.unshift(form); 
-
         const newDrafts = this.state.draftedEvents.slice();
         newDrafts.unshift(form);
 
-        this.setState ({   
-          status: 'draft',     
-          eventName: '',
-          eventDescription: '',
-          eventDate: '',
-          eventTime: '',
-          eventLocation: '',
-          eventHost: '',
-          eventContact: '',
+        this.setState ({ 
+          activeTab: this.state.activeTab,
+          modal: this.state.modal,
+          draftedEvents: newDrafts
+        });
+      });
+    }
+
+    ///////////////////////////////////////////////////
+    // onEditedEvent -> 
+    // This function updates the event when the user
+    // clicks 'update' in editing modal
+    ///////////////////////////////////////////////////
+    onEditedEvent = (updatedEvent) => {
+      console.log("onEditedEvent");
+      console.dir(updatedEvent);
+      let {eventID, ...eventDict} = updatedEvent;
+      // Post to DB with the current state
+      axios.post('http://localhost:5000/api/form/update/' + eventID, eventDict)
+      .then((res) => {
+        console.log("Data written to DB: "); // Log data onto console
+        console.dir(res.data);
+        const form = res.data.form; // Get data from the response
+        
+        // Create a copy of published and drafted arrays and store
+        // Push it to the top of the page
+        const newDrafts = this.state.draftedEvents.slice();
+        const newPublished = this.state.publishedEvents.slice();
+
+        newDrafts[this.state.selectedDraftIndex] = form;
+        newPublished[this.state.selectedPublishedIndex] = form;
+
+        this.setState ({ 
   
+          activeTab: this.state.activeTab,
+          modal: !this.state.modal,
           publishedEvents: newPublished,
           draftedEvents: newDrafts
         });
       });
-    } // End onClickPost
-
-    ////////////////////////////////////////////////////////////
-    // This function clears the event 
-    // when user clicks "clear" on the form
-    ////////////////////////////////////////////////////////////
-    onClickClear = () => {
-      this.setState ({   
-        status: 'draft',     
-        eventName: '',
-        eventDescription: '',
-        eventDate: '',
-        eventTime: '',
-        eventLocation: '',
-        eventHost: '',
-        eventContact: '',
-
-        publishedEvents: [],
-        draftedEvents: []
-      })
-    } // End onClickClear
+    }
     
     ////////////////////////////////////////////////////////////
-    // This function edits the event
-    // Occurs when the user clicks on 'edit'
+    // onClickEdit ->
+    // Called whenever user clicks 'edit'. 
+    // All fields are repopulated with the target event to be 
+    // edited
     ////////////////////////////////////////////////////////////
-    editEvent = (event) => {
+    onClickEdit = (event, index) => {
       console.log ("clicked edit button on event: " );
-      console.log(event.eventName);
+      console.dir(event);
 
-      // Repopulate form
-      const new_state = {...this.state,
-                         status: this.state.status,
-                         eventName: this.state.eventName,
-                         eventDescription: this.state.eventDescription,
-                         eventDate: this.state.eventDate,
-                         eventTime: this.state.eventTime,
-                         eventLocation: this.state.eventLocation,
-                         eventHost: this.state.eventHost,
-                         eventContact: this.state.eventContact,
-
-                         publishedEvents: this.state.publishedEvents,
-                         draftedEvents: this.state.draftedEvents
+      const new_state =  {...this.state,
+                         modal: !this.state.modal,
+                         selectedDraftIndex: index,
+                         selectedPublishedIndex: index,
                          };
         this.setState(new_state);
-    } // End editEvent
+    }
+
+    ////////////////////////////////////////////////////////////
+    // edit_modal_toggle ->
+    // Called whenever user clicks 'edit'. 
+    // Toggles the modal to be displayed to screen
+    ////////////////////////////////////////////////////////////
+    edit_modal_toggle = () => {
+      this.setState({
+        modal: !this.state.modal,
+        selectedDraftIndex: -1,
+        selectedPublishedIndex: -1
+      });
+      console.log("toggle called");
+      console.dir(this.state);
+    }
 
     ////////////////////////////////////////////////////
+    // onClickDelete ->
     // This function deletes the event from the database
     ////////////////////////////////////////////////////
     onClickDelete = (id) => {
@@ -197,9 +219,10 @@ export default class EventManager extends React.Component {
       .catch(err => {
         console.log(err);
       });
-    } // End onClickDelete
+    }
 
     ////////////////////////////////////////////////////////////
+    // moveToPublished ->
     // This function changes the status of the event
     // from "draft" to "published"
     // Occurs when the user clicks on "move to published" button
@@ -219,14 +242,14 @@ export default class EventManager extends React.Component {
         this.setState(newState);
         
         console.dir(this.state.draftedEvents);
-
       })
       .catch (err => {
         console.log( err);
       });
-    } // End onClickPublish
+    }
 
     ////////////////////////////////////////////////////////////
+    // moveToDrafts ->
     // This function changes the status of the event
     // from "published" to "draft"
     // Occurs when the user clicks on "move to draft" button
@@ -247,41 +270,10 @@ export default class EventManager extends React.Component {
       .catch (err => {
         console.log(err);
       });
-    } // End moveToDrafts
-
-    ///////////////////////////////////////////////////
-    // Functions to set the state for the form fields
-    ///////////////////////////////////////////////////
-    onChange_eventName = (e)=>{
-      this.setState({eventName: e });
-    }
-
-    onChange_eventDescription = (e)=>{
-      this.setState({eventDescription: e });
-    }
-
-    onChange_eventDate = (e)=>{
-      this.setState({eventDate: e });
-    }
-    
-    onChange_eventTime = (e)=>{
-      this.setState({eventTime: e });
-    }
-    
-    onChange_eventLocation = (e)=>{
-      this.setState({eventLocation: e });
-    }
-
-    onChange_eventHost = (e)=>{
-      this.setState({eventHost: e });
-    }
-
-    onChange_eventContact = (e)=>{
-      this.setState({eventContact: e });
     }
 
     ///////////////////////////////////////////////////
-    // All the rendering of eventManager is here //////
+    // All the rendering of eventManager is here
     ///////////////////////////////////////////////////
     render() {
       return (
@@ -306,7 +298,6 @@ export default class EventManager extends React.Component {
                     </NavLink> 
                 </NavItem>
                 </Nav>
-
           {/*the following will display the tabs*/}
           <Nav tabs>
 
@@ -346,16 +337,11 @@ export default class EventManager extends React.Component {
               <Row>
                 <Col sm="10">
                   <h4 align = "center" style = {{paddingTop: 5}}>Post New announcements</h4> <br></br>
-                    <EventForm postEvent = {(e) => this.onClickPost(e)}  clearEvent = {() => this.onClickClear()}
-                               onEventNameChange = {this.state.onChange_eventName}
-                               onEventDescriptionChange = {this.onChange_eventDescription}
-                               onEventDateChange = {this.onChange_eventDate}
-                               onEventTimeChange = {this.onChange_eventTime}
-                               onEventLocationChange = {this.onChange_eventLocation}
-                               onEventHostChange = {this.onChange_eventHost}
-                               onEventContactChange = {this.onChange_eventContact}
-                              />
-                  </Col>
+                    <EventForm
+                            status = {'draft'}
+                            onPostSubmit = {this.onClickPost}
+                    />
+                </Col>
               </Row>
             </TabPane>
           
@@ -365,29 +351,33 @@ export default class EventManager extends React.Component {
                         edit*/}
             <TabPane tabId="2" >
                 <Col sm="12" style = {{paddingTop: 10}}> 
-                    {this.state.draftedEvents.map( (event) => (
+                    {this.state.draftedEvents.map( (event, index) => (
                       <Card body className="text-center" key={event._id}>
                         <CardTitle>{event.eventName}</CardTitle>
                         <CardText>{event.eventDescription}</CardText>
                          
                           <div className = "button_center">
                             <Button color="primary" onClick = {()=>this.moveToPublished(event._id)}>Move to Published events</Button> {' '}
-                            <Button color="secondary" onClick = {() => this.edit_modal_toggle()}>Edit</Button> {' '}
+                            <Button color="secondary" onClick = {()=>this.onClickEdit(event, index)}>Edit</Button> {' '}
                                   <div className="modal">
-                                  <Modal isOpen={this.state.modal} toggle={this.edit_modal_toggle}>
+                                  <Modal isOpen={this.state.modal && index === this.state.selectedDraftIndex } toggle={this.edit_modal_toggle}>
                                     <ModalHeader toggle={this.edit_modal_toggle}>Edit your event</ModalHeader>
                                     <ModalBody>
                                        <div>
-                                         <EventForm postEvent = {(e) => this.editEvent(e)}  clearEvent = {() => this.onClickClear()}
-                                                    event = {event.eventName}
-                                                    onEventNameChange = {this.onChange_eventName}
-                                                    onEventDescriptionChange = {this.onChange_eventDescription}
-                                                    onEventDateChange = {this.onChange_eventDate}
-                                                    onEventTimeChange = {this.onChange_eventTime}
-                                                    onEventLocationChange = {this.onChange_eventLocation}
-                                                    onEventHostChange = {this.onChange_eventHost}
-                                                    onEventContactChange = {this.onChange_eventContact}
-                                                    />/>
+                                         <EventForm
+                                                    isEditing = {true}
+                                                    status = {event.status}
+                                                    eventID = {event._id}
+                                                    eventName = {event.eventName}
+                                                    eventDescription = {event.eventDescription}
+                                                    eventDate = {event.eventDate}
+                                                    eventTime = {event.eventTime}
+                                                    eventLocation = {event.eventLocation}
+                                                    eventHost = {event.eventHost}
+                                                    eventContact = {event.eventContact}
+                                                    
+                                                    onEditEvent={this.onEditedEvent}
+                                                    />
                                       </div>
                                     </ModalBody>
                                   </Modal>
@@ -402,14 +392,37 @@ export default class EventManager extends React.Component {
             {/*Will show PUBLISHED events i.e. events shown on announcements page*/}
             <TabPane tabId="3">
             <Col sm="12" style = {{paddingTop: 10}}>
-              {this.state.publishedEvents.map( (event) => ( 
+              {this.state.publishedEvents.map( (event, index) => ( 
                 <Card body className="text-center" key={event._id}>
                   <CardTitle>{event.eventName}</CardTitle>
                   <CardText>{event.eventDescription}</CardText>
 
                   <div className = "button_center">
                     <Button color="primary" onClick = {()=>this.moveToDrafts(event._id)}>Move to Drafts</Button> {' '}
-                    <Button color="secondary">Edit</Button> {' '}
+                    <Button color="secondary" onClick = {()=>this.onClickEdit(event, index)}>Edit</Button> {' '}
+                      <div className="modal">
+                      <Modal isOpen={this.state.modal && index === this.state.selectedPublishedIndex } toggle={this.edit_modal_toggle}>
+                        <ModalHeader toggle={this.edit_modal_toggle}>Edit your event</ModalHeader>
+                        <ModalBody>
+                           <div>
+                            <EventForm
+                                      isEditing = {true}
+                                      status = {event.status}
+                                      eventID = {event._id}
+                                      eventName = {event.eventName}
+                                      eventDescription = {event.eventDescription}
+                                      eventDate = {event.eventDate}
+                                      eventTime = {event.eventTime}
+                                      eventLocation = {event.eventLocation}
+                                      eventHost = {event.eventHost}
+                                      eventContact = {event.eventContact}
+                                      
+                                      onEditEvent={this.onEditedEvent}
+                                      />
+                          </div>
+                        </ModalBody>
+                      </Modal>
+                      </div>
                     <Button color="danger" onClick = {()=>this.onClickDelete(event._id)}>Delete</Button>
                   </div>
                 </Card>

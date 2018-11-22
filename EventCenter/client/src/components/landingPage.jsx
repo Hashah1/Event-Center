@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import "./landingPage.css"
 import FacebookLogin from 'react-facebook-login';
+import axios from 'axios';
 import { BrowserRouter, Route } from 'react-router-dom'
 import { AvForm, AvGroup, AvInput, AvFeedback,  } from 'availity-reactstrap-validation';
 import { Button , Label} from 'reactstrap';
@@ -15,7 +16,9 @@ export default class LandingPage extends Component {
         picture: ''
     }
     responseFacebook = (response) => {
-        console.log ("in responseFacebook:" + response);
+        console.log ("in responseFacebook:");
+        console.dir(response);
+
         this.setState ({
             isLoggedIn: true,
             userID: response.userID,
@@ -23,6 +26,16 @@ export default class LandingPage extends Component {
             email: response.email,
             picture: response.picture.data.url
         });
+
+        axios.post('/api/user/signup', {email: response.email, password: response.userID})
+            .then((res) => {
+                console.log("Got response from the login");
+                console.log("successful");
+                console.dir(res);
+                localStorage.setItem('jwtToken', "JWT " + res.data.user.token);
+                this.props.history.push('/eventManager');
+            });
+
     };
     componentClicked = () => {
         console.log ("component clicked");

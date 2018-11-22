@@ -1,8 +1,9 @@
-//TODO: 
-// 2. When we type something in published edit, it copies over same state
-// 3. When adding file to drafts , its copied to published too
+/*
+eventManager.jsx -> 
+Main component for managing events
+ */
 import React from 'react';
-import { Col, Button, TabContent, TabPane, Nav, NavItem, NavLink, Card, CardTitle, CardText, Row, Modal, ModalHeader , ModalFooter, ModalBody} from 'reactstrap';
+import { Col, Button, TabContent, TabPane, Nav, NavItem, NavLink, Card, CardTitle, CardText, Row, Modal, ModalHeader, ModalBody} from 'reactstrap';
 import classnames from 'classnames';
 import axios from 'axios';
 import "./announcementsPage.css"
@@ -14,6 +15,10 @@ import EventForm from './form';
 export default class EventManager extends React.Component {
     constructor(props) {
       super(props);
+      console.log('Constructor props:');
+      console.dir(props);
+      console.log("Local storage:");
+      console.dir(localStorage);
 
       this.state = {
         activeTab: '1',
@@ -31,6 +36,15 @@ export default class EventManager extends React.Component {
     componentDidMount = () => {
       console.log("componentDidMount");
       console.dir(this.state);
+
+      let token = localStorage.getItem('jwtToken');
+
+      if (!token) {
+        this.props.history.push("/login");
+      }
+
+      axios.defaults.headers.common["Authorization"] = token;
+      
       this.loadPublishedEventsFromServer();
       this.loadDraftedEventsFromServer();
     }
@@ -52,7 +66,11 @@ export default class EventManager extends React.Component {
       axios.get('http://localhost:5000/api/form?status=published')
       .then(res => {
         //console.log(res.data);
-
+        if (res.data.status == false) {
+          // do nothing
+          // or show an alert to the user
+          return;
+        }
         // Load new state
         let newState = {...this.state, publishedEvents: res.data.data };
         this.setState(newState);
@@ -68,7 +86,11 @@ export default class EventManager extends React.Component {
       axios.get('http://localhost:5000/api/form?status=draft')
       .then(res => {
         //console.log(res.data);
-
+        if (res.data.status == false) {
+          // do nothing
+          // or show an alert to the user
+          return;
+        }
         // Load new state
         let newState = {...this.state, draftedEvents: res.data.data };
         this.setState(newState);
@@ -109,8 +131,13 @@ export default class EventManager extends React.Component {
       // Post to DB with the current state
       axios.post('http://localhost:5000/api/form', submitData)
       .then((res) => {
-        console.log("Data written to DB: " + res.data); // Log data onto console
-
+        console.log("Data written to DB: "); // Log data onto console
+        console.dir(res);
+        if (res.data.status == false) {
+          // do nothing
+          // or show an alert to the user
+          return;
+        }
         const form = res.data.data; // Get data from the response
         
         // Create a copy of published and drafted arrays and store
@@ -296,165 +323,183 @@ export default class EventManager extends React.Component {
       });
     }
 
+
+  logout = () => {
+    localStorage.removeItem('jwtToken');
+    window.location.reload();
+    this.props.history.push("/login");
+  }
+
     ///////////////////////////////////////////////////
     // All the rendering of eventManager is here
     ///////////////////////////////////////////////////
     render() {
       return (
         <div >
-                <Nav className = "NavBar">
-                <h1 align = "center">Event Manager Page</h1>
-                <NavItem>
-                    <NavLink activestyle = {{
-                    fontWeight: "bold", 
-                    color: "white" 
-                    }}
-                    >Home
-                    </NavLink>
-                </NavItem>
-                
-                <NavItem>
-                    <NavLink activestyle = {{
-                    fontWeight: "bold", 
-                    color: "white" 
-                    }}
-                    >Event Manager
-                    </NavLink> 
-                </NavItem>
-                </Nav>
-          {/*the following will display the tabs*/}
-          <Nav tabs>
-
-          <NavItem>
-              <NavLink
-                className={classnames({ active: this.state.activeTab === '1' })}
-                onClick={() => { this.toggle('1'); }}
-              >
-                Post
-              </NavLink>
-            </NavItem>
+      
+            <Nav className = "NavBar">
+            <h1 align = "center">Event Manager Page</h1>
+            {/* <NavItem>
+                <NavLink activestyle = {{
+                fontWeight: "bold", 
+                color: "white" 
+                }}
+                >Home
+                </NavLink>
+            </NavItem> */}
 
             <NavItem>
-              <NavLink
-                className={classnames({ active: this.state.activeTab === '2' })}
-                onClick={() => { this.toggle('2'); }}
-              >
-                Drafts
-              </NavLink>
+            <div class="panel-heading">
+              <h3 class="panel-title">
+                {localStorage.getItem('jwtToken') &&
+                  <button class="btn btn-primary" onClick={this.logout} >Logout</button>
+                }
+              </h3>
+            </div>
             </NavItem>
             
-            <NavItem>
-              <NavLink
-                className={classnames({ active: this.state.activeTab === '3' })}
-                onClick={() => { this.toggle('3'); }}
-              >
-                Published
-              </NavLink>
-            </NavItem>
-          </Nav>
+            {/* <NavItem>
+                <NavLink activestyle = {{
+                fontWeight: "bold", 
+                color: "white" 
+                }}
+                >Event Manager
+                </NavLink> 
+            </NavItem> */}
+            </Nav>
+      {/*the following will display the tabs*/}
+      <Nav tabs>
 
-          {/*The following will handle what happens when we click it*/}
-          <TabContent activeTab={this.state.activeTab}>
+      <NavItem>
+          <NavLink
+            className={classnames({ active: this.state.activeTab === '1' })}
+            onClick={() => { this.toggle('1'); }}
+          >
+            Post
+          </NavLink>
+        </NavItem>
 
-            {/*Will POST new events through a form*/}
-            <TabPane tabId="1" style = {{paddingLeft: 100}} className = "form">
-              <Row>
-                <Col sm="10">
-                  <h4 align = "center" style = {{paddingTop: 5}}>Post New announcements</h4> <br></br>
-                    <EventForm
-                            status = {'draft'}
-                            onPostSubmit = {this.onClickPost}
-                    />
-                </Col>
-              </Row>
-            </TabPane>
-          
-            {/*Will show DRAFTS which will have list of events
-                        saved but not published.
-                        Each events panel will have buttons to publish or 
-                        edit*/}
-            <TabPane tabId="2" >
-                <Col sm="12" style = {{paddingTop: 10}}> 
-                    {this.state.draftedEvents.map( (event, index) => (
-                      <Card body className="text-center" key={event._id}>
-                        <CardTitle>{event.eventName}</CardTitle>
-                        <CardText>{event.eventDescription}</CardText>
-                         
-                          <div className = "button_center">
-                            <Button color="primary" onClick = {()=>this.moveToPublished(event._id)}>Move to Published events</Button> {' '}
-                            <Button color="secondary" onClick = {()=>this.onClickEdit(event, index)}>Edit</Button> {' '}
-                                  <div className="modal">
-                                  <Modal isOpen={ this.state.modal && index === this.state.selectedDraftIndex } toggle={this.edit_modal_toggle}>
-                                    <ModalHeader toggle={this.edit_modal_toggle}>Edit your event</ModalHeader>
-                                    <ModalBody>
-                                       <div>
-                                         <EventForm
-                                                    isEditing = {true}
-                                                    status = {event.status}
-                                                    eventID = {event._id}
-                                                    eventName = {event.eventName}
-                                                    eventDescription = {event.eventDescription}
-                                                    eventDate = {event.eventDate}
-                                                    eventTime = {event.eventTime}
-                                                    eventLocation = {event.eventLocation}
-                                                    eventHost = {event.eventHost}
-                                                    eventContact = {event.eventContact}
-                                                    
-                                                    onEditEvent={this.onEditedEvent}
-                                                    />
-                                      </div>
-                                    </ModalBody>
-                                  </Modal>
-                                  </div>
-                            <Button color="danger" onClick = {()=>this.onClickDelete(event._id)}>Delete</Button>
-                          </div>
-                      </Card>
-                    ))}
-                </Col>
-            </TabPane>
+        <NavItem>
+          <NavLink
+            className={classnames({ active: this.state.activeTab === '2' })}
+            onClick={() => { this.toggle('2'); }}
+          >
+            Drafts
+          </NavLink>
+        </NavItem>
+        
+        <NavItem>
+          <NavLink
+            className={classnames({ active: this.state.activeTab === '3' })}
+            onClick={() => { this.toggle('3'); }}
+          >
+            Published
+          </NavLink>
+        </NavItem>
+      </Nav>
 
-            {/*Will show PUBLISHED events i.e. events shown on announcements page*/}
-            <TabPane tabId="3">
-            <Col sm="12" style = {{paddingTop: 10}}>
-              {this.state.publishedEvents.map( (event, index) => ( 
-                <Card body className="text-center" key={event._id}>
-                  <CardTitle>{event.eventName}</CardTitle>
-                  <CardText>{event.eventDescription}</CardText>
+      {/*The following will handle what happens when we click it*/}
+      <TabContent activeTab={this.state.activeTab}>
 
-                  <div className = "button_center">
-                    <Button color="primary" onClick = {()=>this.moveToDrafts(event._id)}>Move to Drafts</Button> {' '}
-                    <Button color="secondary" onClick = {()=>this.onClickEdit(event, index)}>Edit</Button> {' '}
-                      <div className="modal">
-                      <Modal isOpen={ this.state.modal && index === this.state.selectedPublishedIndex } toggle={this.edit_modal_toggle}>
-                        <ModalHeader toggle={this.edit_modal_toggle}>Edit your event</ModalHeader>
-                        <ModalBody>
-                           <div>
-                            <EventForm
-                                      isEditing = {true}
-                                      status = {event.status}
-                                      eventID = {event._id}
-                                      eventName = {event.eventName}
-                                      eventDescription = {event.eventDescription}
-                                      eventDate = {event.eventDate}
-                                      eventTime = {event.eventTime}
-                                      eventLocation = {event.eventLocation}
-                                      eventHost = {event.eventHost}
-                                      eventContact = {event.eventContact}
-                                      
-                                      onEditEvent={this.onEditedEvent}
-                                      />
-                          </div>
-                        </ModalBody>
-                      </Modal>
-                      </div>
-                    <Button color="danger" onClick = {()=>this.onClickDelete(event._id)}>Delete</Button>
-                  </div>
-                </Card>
-            ))}
+        {/*Will POST new events through a form*/}
+        <TabPane tabId="1" style = {{paddingLeft: 100}} className = "form">
+          <Row>
+            <Col sm="10">
+              <h4 align = "center" style = {{paddingTop: 5}}>Post New announcements</h4> <br></br>
+                <EventForm
+                        status = {'draft'}
+                        onPostSubmit = {this.onClickPost}
+                />
             </Col>
-            </TabPane>
-          </TabContent>
-        </div>
+          </Row>
+        </TabPane>
+      
+        {/*Will show DRAFTS which will have list of events
+                    saved but not published.
+                    Each events panel will have buttons to publish or 
+                    edit*/}
+        <TabPane tabId="2" >
+            <Col sm="12" style = {{paddingTop: 10}}> 
+                {this.state.draftedEvents.map( (event, index) => (
+                  <Card body className="text-center" key={event._id}>
+                    <CardTitle>{event.eventName}</CardTitle>
+                    <CardText>{event.eventDescription}</CardText>
+                      
+                      <div className = "button_center">
+                        <Button color="primary" onClick = {()=>this.moveToPublished(event._id)}>Move to Published events</Button> {' '}
+                        <Button color="secondary" onClick = {()=>this.onClickEdit(event, index)}>Edit</Button> {' '}
+                              <div className="modal">
+                              <Modal isOpen={ this.state.modal && index === this.state.selectedDraftIndex } toggle={this.edit_modal_toggle}>
+                                <ModalHeader toggle={this.edit_modal_toggle}>Edit your event</ModalHeader>
+                                <ModalBody>
+                                    <div>
+                                      <EventForm // Call the event form component for editing
+                                                isEditing = {true}
+                                                status = {event.status}
+                                                eventID = {event._id}
+                                                eventName = {event.eventName}
+                                                eventDescription = {event.eventDescription}
+                                                eventDate = {event.eventDate}
+                                                eventTime = {event.eventTime}
+                                                eventLocation = {event.eventLocation}
+                                                eventHost = {event.eventHost}
+                                                eventContact = {event.eventContact}
+                                                
+                                                onEditEvent={this.onEditedEvent}
+                                                />
+                                  </div>
+                                </ModalBody>
+                              </Modal>
+                              </div>
+                        <Button color="danger" onClick = {()=>this.onClickDelete(event._id)}>Delete</Button>
+                      </div>
+                  </Card>
+                ))}
+            </Col>
+        </TabPane>
+
+        {/*Will show PUBLISHED events i.e. events shown on announcements page*/}
+        <TabPane tabId="3">
+        <Col sm="12" style = {{paddingTop: 10}}>
+          {this.state.publishedEvents.map( (event, index) => ( 
+            <Card body className="text-center" key={event._id}>
+              <CardTitle>{event.eventName}</CardTitle>
+              <CardText>{event.eventDescription}</CardText>
+
+              <div className = "button_center">
+                <Button color="primary" onClick = {()=>this.moveToDrafts(event._id)}>Move to Drafts</Button> {' '}
+                <Button color="secondary" onClick = {()=>this.onClickEdit(event, index)}>Edit</Button> {' '}
+                  <div className="modal">
+                  <Modal isOpen={ this.state.modal && index === this.state.selectedPublishedIndex } toggle={this.edit_modal_toggle}>
+                    <ModalHeader toggle={this.edit_modal_toggle}>Edit your event</ModalHeader>
+                    <ModalBody>
+                        <div>
+                        <EventForm // call the event form component for editing
+                                  isEditing = {true}
+                                  status = {event.status}
+                                  eventID = {event._id}
+                                  eventName = {event.eventName}
+                                  eventDescription = {event.eventDescription}
+                                  eventDate = {event.eventDate}
+                                  eventTime = {event.eventTime}
+                                  eventLocation = {event.eventLocation}
+                                  eventHost = {event.eventHost}
+                                  eventContact = {event.eventContact}
+                                  
+                                  onEditEvent={this.onEditedEvent}
+                                  />
+                      </div>
+                    </ModalBody>
+                  </Modal>
+                  </div>
+                <Button color="danger" onClick = {()=>this.onClickDelete(event._id)}>Delete</Button>
+              </div>
+            </Card>
+        ))}
+        </Col>
+        </TabPane>
+      </TabContent>
+    </div>
       );
     }
   }

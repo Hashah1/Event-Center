@@ -114,6 +114,10 @@ export default class EventForm extends React.Component {
         this.setState(this.initialState);
     }
 
+    /////////////////////////////////////////////////
+    // renderButtons ->
+    // Render buttons based on edit mode or post mode
+    /////////////////////////////////////////////////
     renderButtons() {
         if(this.props.isEditing) {
           return (

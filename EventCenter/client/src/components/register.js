@@ -33,7 +33,7 @@ class Create extends Component {
   render() {
     const { username, password } = this.state;
     return (
-      <div class="container">
+      <div class="login">
         <form class="form-signin" onSubmit={this.onSubmit}>
           <h2 class="form-signin-heading">Register</h2>
           <label for="inputEmail" class="sr-only">Email address</label>
@@ -41,6 +41,7 @@ class Create extends Component {
           <label for="inputPassword" class="sr-only">Password</label>
           <input type="password" class="form-control" placeholder="Password" name="password" value={password} onChange={this.onChange} required/>
           <button class="btn btn-lg btn-primary btn-block" type="submit">Register</button>
+          <p>Don't want to register? <Link to="/login"><span class="glyphicon glyphicon-plus-sign" aria-hidden="true"></span> Sign in</Link> <br></br></p>
         </form>
       </div>
     );

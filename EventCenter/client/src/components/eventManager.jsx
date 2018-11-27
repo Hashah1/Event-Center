@@ -2,13 +2,15 @@
 eventManager.jsx -> 
 Main component for managing events
  */
+
 import React from 'react';
 import { Col, Button, TabContent, TabPane, Nav, NavItem, NavLink, Card, CardTitle, CardText, Row, Modal, ModalHeader, ModalBody} from 'reactstrap';
 import classnames from 'classnames';
 import axios from 'axios';
 import "./announcementsPage.css"
 import "./announcementsPage"
-import "./form"
+import NavBarTop from "./navBarTop.jsx";
+
 import EventForm from './form';
 
 
@@ -36,11 +38,13 @@ export default class EventManager extends React.Component {
     componentDidMount = () => {
       console.log("componentDidMount");
       console.dir(this.state);
+      console.dir(this.state.history);
 
       let token = localStorage.getItem('jwtToken');
 
       if (!token) {
         this.props.history.push("/login");
+        console.dir(this.state.history);
       }
 
       axios.defaults.headers.common["Authorization"] = token;
@@ -335,41 +339,12 @@ export default class EventManager extends React.Component {
     ///////////////////////////////////////////////////
     render() {
       return (
-        <div >
-      
-            <Nav className = "NavBar">
-            <h1 align = "center">Event Manager Page</h1>
-            {/* <NavItem>
-                <NavLink activestyle = {{
-                fontWeight: "bold", 
-                color: "white" 
-                }}
-                >Home
-                </NavLink>
-            </NavItem> */}
-
-            <NavItem>
-            <div class="panel-heading">
-              <h3 class="panel-title">
-                {localStorage.getItem('jwtToken') &&
-                  <button class="btn btn-primary" onClick={this.logout} >Logout</button>
-                }
-              </h3>
-            </div>
-            </NavItem>
-            
-            {/* <NavItem>
-                <NavLink activestyle = {{
-                fontWeight: "bold", 
-                color: "white" 
-                }}
-                >Event Manager
-                </NavLink> 
-            </NavItem> */}
-            </Nav>
+        <div className = "body">
+        <NavBarTop /> {/*import navigation bar script*/}
+        
       {/*the following will display the tabs*/}
       <Nav tabs>
-
+      
       <NavItem>
           <NavLink
             className={classnames({ active: this.state.activeTab === '1' })}
@@ -404,8 +379,7 @@ export default class EventManager extends React.Component {
         {/*Will POST new events through a form*/}
         <TabPane tabId="1" style = {{paddingLeft: 100}} className = "form">
           <Row>
-            <Col sm="10">
-              <h4 align = "center" style = {{paddingTop: 5}}>Post New announcements</h4> <br></br>
+            <Col sm="10" style = {{paddingTop: 35}}>
                 <EventForm
                         status = {'draft'}
                         onPostSubmit = {this.onClickPost}

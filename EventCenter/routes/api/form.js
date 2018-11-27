@@ -79,7 +79,8 @@ router.post('/', passport.authenticate('jwt', {session: false}), (req,res) => {
 });
 
 //////////////////////////////
-// GET API
+// GET API for users who have 
+// logged in
 //////////////////////////////
 router.get('/', passport.authenticate('jwt', {session: false}), (req,res) => {
 	const token = getToken(req.headers);
@@ -96,6 +97,34 @@ router.get('/', passport.authenticate('jwt', {session: false}), (req,res) => {
 
 	// query every forms in our db
 	Form.find(data)
+	.then(forms => {
+		// return json response
+		res.json({
+			status: true,
+			data: forms
+		})
+	})
+	.catch(err => {
+		res.json({
+			status: false,
+			message: err.message
+		})
+	})
+});
+
+///////////////////////////////////
+// GET API for users who have 
+// want to see all published events
+// regardless of logged in or not
+///////////////////////////////////
+router.get('/public', (req,res) => {
+	// Get query from url
+	const query = req.query;
+
+	//const data = {...query, authorId: userId};
+
+	// query every forms in our db
+	Form.find(query)
 	.then(forms => {
 		// return json response
 		res.json({

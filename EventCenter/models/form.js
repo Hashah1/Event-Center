@@ -11,8 +11,9 @@ const Form = new mongoose.Schema({
     eventTime: {type:String, trim:true, default: ''},
     eventLocation: {type:String, trim:true, default: ''},
     eventHost: {type:String, trim:true, default: ''},
-    eventContact: {type:String, trim:true, default: ''}
+    eventContact: {type:String, trim:true, default: ''},
+    authorId: {type:String, trim:true, required:true}
 
 });
 
-module.exports = mongoose.model('Form', Form)
+module.exports = mongoose.model('Form', Form);

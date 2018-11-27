@@ -8,7 +8,6 @@ import React  from 'react';
 import { Col, Form, Button, FormGroup, Label, Input } from 'reactstrap';
 
 
-
 export default class EventForm extends React.Component {
     
     initialState = {
@@ -107,10 +106,18 @@ export default class EventForm extends React.Component {
         this.setState(this.initialState);
     }
 
+    ////////////////////////////////////
+    // onClickClear ->
+    // Responsible for clearing the form
+    ////////////////////////////////////
     onClickClear = () => {
         this.setState(this.initialState);
     }
 
+    /////////////////////////////////////////////////
+    // renderButtons ->
+    // Render buttons based on edit mode or post mode
+    /////////////////////////////////////////////////
     renderButtons() {
         if(this.props.isEditing) {
           return (

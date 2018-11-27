@@ -1,68 +1,83 @@
 import React from 'react';
 import {Card, Button, CardTitle, Row, Col, CardText, Nav, NavItem, NavLink } from 'reactstrap';
-
-import "./announcementsPage.css"
+import axios from 'axios';
+import NavBarTop from "./navBarTop.jsx";
 
 export default class AnnouncementsPage extends React.Component {
+  constructor(props) {
+    super(props);
+    console.log('Constructor props:');
+    console.dir(props);
+    console.log("Local storage:");
+    console.dir(localStorage);
+
+    this.state = {
+      publishedEvents: []
+    };
+  };
+
+    ///////////////////////////////////////////////
+    // componentDidMount -> 
+    // Loads all events upon component load
+    ///////////////////////////////////////////////
+    componentDidMount = () => {
+      console.log("componentDidMount");
+      console.dir(this.state);
+      this.loadPublishedEventsFromServer();
+      
+      console.dir(this.state);
+    }
+
+    ///////////////////////////////////////////////
+    // componentDidUpdate
+    ///////////////////////////////////////////////
+    componentDidUpdate = () => {
+      console.log("componentDidUpdate");
+      console.dir(this.state);
+    }
+
+    ///////////////////////////////////////////////////////////////
+    // loadPublishedEventsFromServer -> 
+    // Loads all published events from  DB into the "published" tab
+    ///////////////////////////////////////////////////////////////
+    loadPublishedEventsFromServer = () => {
+      axios.get('http://localhost:5000/api/form/public?status=published')
+      .then(res => {
+        //console.log(res.data);
+        if (res.data.status == false) {
+          // do nothing
+          // or show an alert to the user
+          console.log("in err");
+          return;
+        }
+        // Load new state
+        let newState = {...this.state, publishedEvents: res.data.data };
+        this.setState(newState);
+        console.log("res.data");
+        console.dir(res.data);
+        //console.log(this.state);
+      });
+    }
 
   render() {
     return (
       <div className = "announcements">
-        
-        <Nav className = "NavBar">
-        <h1 align="center">Announcements Page</h1>
-          
-          <NavItem>
-            <NavLink activestyle = {{
-               fontWeight: "bold", 
-               color: "white" 
-            }}
-            >Home
-            </NavLink>
-          </NavItem>
-          
-          <NavItem>
-            <NavLink activestyle = {{
-               fontWeight: "bold", 
-               color: "white" 
-            }}
-            >Event Manager
-            </NavLink> 
-          </NavItem>
-        </Nav>
+      <NavBarTop />
 
 {/*Cards will display the events shown*/}
-       <Row>
-      <Col sm="6" style = {{    
-          paddingTop: '10px'
-        }}>
-        <Card body>
-          <CardTitle><p class = "text-muted">Event 1</p></CardTitle>
-          <CardText><p class = "text-muted">This is event 1</p></CardText>
-          <Button>Learn more</Button>
-        </Card>
-      </Col>
-     
-      <Col sm="6" style = {{    
-          paddingTop: '10px'
-        }}>
-        <Card body>
-          <CardTitle><p class = "text-muted">Event 2</p></CardTitle>
-          <CardText><p class = "text-muted">This is event 2</p></CardText>
-          <Button>Learn more</Button>
-        </Card>
-      </Col>
+       {/* <Card body className="text-center" key={event._id}>
+                    <CardTitle>{event.eventName}</CardTitle>
+                    <CardText>{event.eventDescription}</CardText> */}
+              <Col sm="12" style = {{paddingTop: 10}}>
+                  {this.state.publishedEvents.map( (event) => ( 
+                  <Card body className="text-center" key={event._id}>
 
-       <Col sm="6" style = {{    
-          paddingTop: '10px'
-        }}>
-        <Card body>
-          <CardTitle><p class = "text-muted">Event 3</p></CardTitle>
-          <CardText><p class = "text-muted">This is event 3</p></CardText>
-          <Button>Learn more</Button>
-        </Card>
-      </Col>
-    </Row>
+                    <CardTitle>{event.eventName}</CardTitle>
+                    <CardText>{event.eventDescription}</CardText>
+                                        
+                  </Card>
+                  ))}
+              </Col>
       </div>
     );
   }

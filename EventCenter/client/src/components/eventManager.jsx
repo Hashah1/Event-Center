@@ -4,10 +4,13 @@ Main component for managing events
  */
 
 import React from 'react';
+import {NotificationContainer, NotificationManager} from 'react-notifications';
 import { Col, Button, TabContent, TabPane, Nav, NavItem, NavLink, Card, CardTitle, CardText, Row, Modal, ModalHeader, ModalBody} from 'reactstrap';
 import classnames from 'classnames';
 import axios from 'axios';
 import "./announcementsPage.css"
+import "react-notifications/dist/react-notifications.css"
+
 import "./announcementsPage"
 import NavBarTop from "./navBarTop.jsx";
 
@@ -140,6 +143,7 @@ export default class EventManager extends React.Component {
         if (res.data.status == false) {
           // do nothing
           // or show an alert to the user
+          
           return;
         }
         const form = res.data.data; // Get data from the response
@@ -148,12 +152,15 @@ export default class EventManager extends React.Component {
         // Push it to the top of the page
         const newDrafts = this.state.draftedEvents.slice();
         newDrafts.unshift(form);
+        console.log(this.state.modal);
 
         this.setState ({ 
           activeTab: this.state.activeTab,
-          modal: this.state.modal,
+          modal: true,
           draftedEvents: newDrafts
         });
+        NotificationManager.success('Posted Successfully!');
+
       });
     }
 
@@ -188,7 +195,6 @@ export default class EventManager extends React.Component {
             selectedPublishedIndex: -1,
             selectedDraftIndex: this.state.index
           });
-          
         }
         else if (updatedEvent.status === "draft")
         {
@@ -204,6 +210,8 @@ export default class EventManager extends React.Component {
             selectedDraftIndex: -1
           });
         }
+        NotificationManager.success('Edited Successfully!');
+
       });
     }
     
@@ -231,6 +239,9 @@ export default class EventManager extends React.Component {
           selectedDraftIndex: index,
           };
         this.setState(new_state);
+        // console.log("onClickEdit");
+        // NotificationManager.success('Edited Successfully!');
+
       }
     }
 
@@ -270,6 +281,8 @@ export default class EventManager extends React.Component {
         const newState = {...this.state,publishedEvents: filteredPublishedEvents ,draftedEvents: filteredDrafts};
 
         this.setState(newState);
+        
+        NotificationManager.success('Deleted Successfully!');
       })
       .catch(err => {
         console.log(err);
@@ -297,6 +310,7 @@ export default class EventManager extends React.Component {
         this.setState(newState);
         
         console.dir(this.state.draftedEvents);
+        NotificationManager.success('Moved to Published!');
       })
       .catch (err => {
         console.log( err);
@@ -321,6 +335,8 @@ export default class EventManager extends React.Component {
         const newState = {...this.state, publishedEvents: filteredPublishedEvents};
         newState.draftedEvents.unshift(event);
         this.setState(newState);
+        NotificationManager.success('Moved to Drafts!');
+
       })
       .catch (err => {
         console.log(err);
@@ -340,8 +356,13 @@ export default class EventManager extends React.Component {
     render() {
       return (
         <div className = "body">
+        <NotificationContainer />
         <NavBarTop /> {/*import navigation bar script*/}
-        
+        {/* <div className="modal">
+          <Modal isOpen={ this.state.modal } toggle={this.edit_modal_toggle}>
+              <ModalHeader toggle={this.edit_modal_toggle}>Sucessful</ModalHeader>
+        </Modal></div> */}
+      
       {/*the following will display the tabs*/}
       <Nav tabs>
       
@@ -372,7 +393,7 @@ export default class EventManager extends React.Component {
           </NavLink>
         </NavItem>
       </Nav>
-
+      
       {/*The following will handle what happens when we click it*/}
       <TabContent activeTab={this.state.activeTab}>
 
@@ -398,7 +419,12 @@ export default class EventManager extends React.Component {
                   <Card body className="text-center" key={event._id}>
                     <CardTitle>{event.eventName}</CardTitle>
                     <CardText>{event.eventDescription}</CardText>
-                      
+                    <CardText>{event.eventDate}</CardText>
+                    <CardText>{event.eventTime}</CardText>
+                    <CardText>{event.eventLocation}</CardText>
+                    <CardText>{event.eventHost}</CardText>
+                    <CardText>{event.eventContact}</CardText>
+                            
                       <div className = "button_center">
                         <Button color="primary" onClick = {()=>this.moveToPublished(event._id)}>Move to Published events</Button> {' '}
                         <Button color="secondary" onClick = {()=>this.onClickEdit(event, index)}>Edit</Button> {' '}
@@ -421,6 +447,7 @@ export default class EventManager extends React.Component {
                                                 
                                                 onEditEvent={this.onEditedEvent}
                                                 />
+
                                   </div>
                                 </ModalBody>
                               </Modal>
@@ -439,6 +466,11 @@ export default class EventManager extends React.Component {
             <Card body className="text-center" key={event._id}>
               <CardTitle>{event.eventName}</CardTitle>
               <CardText>{event.eventDescription}</CardText>
+              <CardText>{event.eventDate}</CardText>
+              <CardText>{event.eventTime}</CardText>
+              <CardText>{event.eventLocation}</CardText>
+              <CardText>{event.eventHost}</CardText>
+              <CardText>{event.eventContact}</CardText>
 
               <div className = "button_center">
                 <Button color="primary" onClick = {()=>this.moveToDrafts(event._id)}>Move to Drafts</Button> {' '}

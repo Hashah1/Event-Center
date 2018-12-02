@@ -5,7 +5,9 @@
 ///////////////////////////////////////////////////
 
 import React  from 'react';
-import { Col, Form, Button, FormGroup, Label, Input } from 'reactstrap';
+import { AvForm, AvField, AvGroup } from 'availity-reactstrap-validation';
+
+import { Col, Button, FormGroup, Label, Input } from 'reactstrap';
 
 
 export default class EventForm extends React.Component {
@@ -89,12 +91,12 @@ export default class EventForm extends React.Component {
     }
 
     onClickSubmit = (e) => {
-        e.preventDefault();
         console.log("on click submit in form");
         console.dir(this.state)
         this.props.onPostSubmit(this.state);
 
         this.setState(this.initialState);
+        this.form.reset();
     }
 
     onClickEdit = (e) => {
@@ -111,7 +113,9 @@ export default class EventForm extends React.Component {
     // Responsible for clearing the form
     ////////////////////////////////////
     onClickClear = () => {
+        console.log("on clear callback");
         this.setState(this.initialState);
+        this.form.reset();
     }
 
     /////////////////////////////////////////////////
@@ -128,74 +132,75 @@ export default class EventForm extends React.Component {
         } else {
           return (
             <Col sm = {100} style = {{paddingTop:15}}>
-                <Button color = "primary" onClick = {(e) => this.onClickSubmit(e)} block> Post to Drafts </Button>
-                <Button color = "danger" onClick = {this.props.onClickClear} block> Clear </Button>
+                <Button color = "primary" block> Post to Drafts </Button>
+                <Button color = "danger" onClick = {this.onClickClear} block> Clear </Button>
             </Col>
           );
         }
       }
+
+
+    handleInvalidSubmit = (event, errors, values) => {
+        console.log("invalid error");
+    }
     ///////////////////////////////////////////////////
     /////////////// Display form here
     ///////////////////////////////////////////////////    
     render () {
-
-        
         return  (
         // Displays form to submit event
-        <Form>
-                <FormGroup row>
+        <AvForm onValidSubmit={(e) => this.onClickSubmit(e)} onInvalidSubmit={this.handleInvalidSubmit} ref={c => (this.form = c)}>
+                <AvGroup row>
                 <Label for="EventName" sm={2}>Event Name</Label>
                 <Col sm={10}>
-                    <Input type="text" value={this.state.eventName} onChange={this.onChange_eventName}name="EventName" id="EventName" placeholder="enter event name" />
+                    <AvField type="text" value={this.state.eventName} onChange={this.onChange_eventName}name="EventName" id="EventName" placeholder="enter event name" required/>
                 </Col>
-                </FormGroup>
+                </AvGroup>
                 
                 <FormGroup row>
                 <Label for="EventDescription" sm={2}>Event Description</Label>
                 <Col sm={10}>
-                    <Input type="textarea" value={this.state.eventDescription} onChange={this.onChange_eventDescription} name="text" id="EventDescription" placeholder="enter event description"/>
+                    <Input type="textarea" value={this.state.eventDescription} onChange={this.onChange_eventDescription} name="text" id="EventDescription" placeholder="enter event description" />
                 </Col>
                 </FormGroup>
                 
-                <FormGroup row>
+                <AvGroup row>
                 <Label for="EventDate" sm={2}>Event Date</Label>
                 <Col sm={10}>
-                <Input type="date" value={this.state.eventDate} onChange={this.onChange_eventDate} name="date" id="EventDate" />
+                <AvField type="date" value={this.state.eventDate} onChange={this.onChange_eventDate} name="date" id="EventDate" required/>
                 </Col>
-                </FormGroup>
+                </AvGroup>
 
-                <FormGroup row>
+                <AvGroup row>
                 <Label for="EventTime" sm={2}>Time</Label>
                 <Col sm={10}>
-                <Input type="time" value={this.state.eventTime} onChange={this.onChange_eventTime} name="time" id="EventTime" />
+                <AvField type="time" value={this.state.eventTime} onChange={this.onChange_eventTime} name="time" id="EventTime" required/>
                 </Col>
-                </FormGroup>
+                </AvGroup>
 
-                <FormGroup row>
+                <AvGroup row>
                 <Label for="EventLocation" sm={2}>Event Location</Label>
                 <Col sm={10}>
-                <Input type="text" value={this.state.eventLocation} onChange={this.onChange_eventLocation} name="text" id="EventLocation" placeholder="123 xyz street" />
+                <AvField type="text" value={this.state.eventLocation} onChange={this.onChange_eventLocation} name="text" id="EventLocation" placeholder="123 xyz street" required />
                 </Col>
-                </FormGroup>
+                </AvGroup>
 
-                <FormGroup row>
-                <Label for="EventHost" sm={2}>Host?</Label>
+                <AvGroup row>
+                <Label for="EventHost" sm={2}>Organizer</Label>
                 <Col sm={10}>
-                    <Input type="text" value={this.state.eventHost} onChange={this.onChange_eventHost} name="EventHost" id="EventHost" placeholder="John Doe" />
+                    <AvField type="text" value={this.state.eventHost} onChange={this.onChange_eventHost} name="EventHost" id="EventHost" placeholder="John Doe" required/>
                 </Col>
-                </FormGroup>
+                </AvGroup>
 
-                <FormGroup row>
-                <Label for="EventContactInfo" sm={2}>Host Email</Label>
+                <AvGroup row>
+                <Label for="EventContactInfo" sm={2}>Organizer's email</Label>
                 <Col sm={10}>
-                    <Input type="email" value={this.state.eventContact} onChange={this.onChange_eventContact} name="EventContactInfo" id="EventContactInfo" placeholder="JohnDoe@sjsu.edu" />
+                    <AvField type="email" value={this.state.eventContact} onChange={this.onChange_eventContact} name="EventContactInfo" id="EventContactInfo" placeholder="JohnDoe@sjsu.edu" required/>
                     <Col sm = {100} style = {{paddingTop:15}}>
                      {this.renderButtons()}
                     </Col>
-
                 </Col>
-                
-                </FormGroup>
-        </Form>
+                </AvGroup>
+        </AvForm>
         )}
 }

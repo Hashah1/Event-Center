@@ -72,8 +72,13 @@ export default class AnnouncementsPage extends React.Component {
                   {this.state.publishedEvents.map( (event) => ( 
                   <Card body className="text-center" key={event._id}>
 
-                    <CardTitle>{event.eventName}</CardTitle>
-                    <CardText>{event.eventDescription}</CardText>
+                  <CardTitle>{event.eventName}</CardTitle>
+                  <CardText>{event.eventDescription}</CardText>
+                  <CardText>{event.eventDate}</CardText>
+                  <CardText>{event.eventTime}</CardText>
+                  <CardText>{event.eventLocation}</CardText>
+                  <CardText>{event.eventHost}</CardText>
+                  <CardText>{event.eventContact}</CardText>
                                         
                   </Card>
                   ))}
